@@ -1,16 +1,48 @@
 const express = require('express');
+const { initializeApp, cert } = require("firebase-admin/app");
+const {getFirestore} = require("firebase-admin/firestore");
+
+const credentials = require("../credentials.json");
+
+initializeApp({
+    credential: cert(credentials),
+})
+
+const db = getFirestore();
 
 const app = express();
 app.use(express.json());
 
 app.get('/', (request, response) => {
-    response.send('Hello World');
+    const userCollection = db.collection("users");
+
+    userCollection
+    .get()
+    .then(snapshot => {
+        
+        const users = []
+        snapshot.forEach(doc => {
+            users.push({id: doc.id, ...doc.data()})//... is the spread operator.
+        })
+        response.send(snapshot.docs)
+    })
+
+    // response.send('Hello World!');
 })
 
 app.post('/users', (req, res) => {
     const {name, age, email} = req.body;
+    
+    // const {name} = req.body;
+    // const name = req.body.name;
 
-    const user = {name, age, email};
+    const user = { name, age, email };
+
+    // const user = {
+    //     fullName: name, 
+    //     age: age,
+    //     email: email
+    // }
 
     const result = `My name is ${user.name}, I am ${user.age} years old and my email is ${user.email}.`;
 
@@ -18,5 +50,5 @@ app.post('/users', (req, res) => {
 })
 
 app.listen(3001, () => {
-    console.log('we be listening on 3001');
-})
+    console.log('We be listening on 3001');
+});
